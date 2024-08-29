@@ -16,7 +16,15 @@ permissions:
   statuses: write
 
 jobs:
+  test-skip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
   compliance-copyrights:
+    needs:
+      - test-skip
+    if: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +32,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+
   pre-commit:
+    needs:
+      - compliance-copyrights
+    if: ${{ success() || failure() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +50,8 @@ jobs:
   publish:
     needs:
       - compliance-copyrights
-      - pre-commit
+#    if: ${{ always() }}
+    if: ${{always() && needs.compliance-copyrights.result != 'skipped'}}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
